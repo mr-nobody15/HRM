@@ -1,0 +1,10 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Ignore all files in the .env directory
+.env/
+
+# Ignore the database file
+sql_app.db
+
