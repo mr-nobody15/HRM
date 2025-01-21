@@ -11,13 +11,15 @@ from app.routes.jobs_routes import router as jobs_router
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
+import tiktoken
+
 
 
 
 load_dotenv()
 
 # Initialize model from LangChain
-
+encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
 model = ChatOpenAI(model="gpt-3.5-turbo",api_key=os.getenv("OPENAI_API_KEY"))
 parser = StrOutputParser()
 
@@ -25,7 +27,6 @@ app = FastAPI(title="My FastAPI App", version="1.0.0")
 
 app.include_router(resume_router)
 app.include_router(jobs_router)
-
 
 
 
@@ -110,6 +111,8 @@ def generate_query_from_question(question):
     chain = prompt | model | parser
     # Invoke the chain with the provided question and enhanced prompt
     query = chain.invoke({"question": question, "prompt": prompt})
+    token = encoding.encode(str(prompt))
+    print("token length *************",len(token))
 
     return query
 
@@ -169,6 +172,9 @@ def query(question:str):
     result = check_query(text(query))
     print(result)
     return result
+
+
+
 
 
 
