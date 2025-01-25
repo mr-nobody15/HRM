@@ -56,7 +56,7 @@ def generate_query_from_question(question):
     Generate a SQL query to retrieve specific information from the database.
 
     The database schema includes a table:
-    - `resume`: Contains user details (userid,name, email, skills, experience, education,projects).
+    - `resume`: Contains user details (id,name,email, skills, experience, education,projects).
                                               
     The `skills` column contains a comma-separated list of skills, and you should:
     1. Search for complete words, not substrings (e.g., "Java" should not match "JavaScript").
@@ -68,7 +68,10 @@ def generate_query_from_question(question):
     question: "give me the resume of the person who has java in skills"
     query: "SELECT *  FROM resume WHERE CONCAT(',', REPLACE(skills, ' ', ''), ',') LIKE '%,java,%';"
                                               
-    question : "give me suitable candidates for this job id 1" 
+    sample questions : "give me suitable candidates job id 1" ,
+                        "give me the candidates suitable for job id 1",
+                        "candidates for job id 1 ",
+                        "suitable candidates for job id 1",
     query: " SELECT 
             r.id AS resume_id,
             r.name AS resume_name,
@@ -117,7 +120,7 @@ def generate_query_from_question(question):
     return query
 
 
-
+import json
 def check_query(query):
     try:
 # Execute the query directly with engine.connect()
@@ -125,19 +128,33 @@ def check_query(query):
             result = connection.execute(query)
         # Check if we get a valid result and it's iterable
             rows = result.fetchall()
+            print(rows,"rows")
+            print("--------------------------------")
             result_list = []
             for row in rows:
-                result_list.append(row._asdict())
+                row_dict = dict(row._mapping)  # Convert row to dictionary
+                # Deserialize JSON fields
+                if "experiences" in row_dict:
+                    row_dict["experiences"] = json.loads(row_dict["experiences"])
+                if "education" in row_dict:
+                    row_dict["education"] = json.loads(row_dict["education"])
+                result_list.append(row_dict)
             return result_list
 
     except Exception as e:
         print(f"Error executing query: {e}")
         return "Error"
+    
+
+
    
+from pydantic import BaseModel
+class QueryRequest(BaseModel):
+    question: str
     
 @app.post("/query")
-def query(question:str):
-    query = generate_query_from_question(question)
+def query(query_request:QueryRequest):
+    query = generate_query_from_question(query_request.question)
     print(query)
     # query_mine = """
     #     SELECT 
