@@ -17,3 +17,6 @@ def add_job(db:Session):
 
 def get_job(db:Session):
     return db.query(models.Job_details).all()
+
+def get_job_by_id(db:Session,job_id:int):
+    return db.query(models.Job_details).filter(models.Job_details.id == job_id).first()
