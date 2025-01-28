@@ -11,6 +11,7 @@ from app.variables.variables import Resume
 from langchain_core.prompts import PromptTemplate
 from fastapi import File, UploadFile
 from langchain_core.output_parsers import StrOutputParser
+import json
 router = APIRouter(
     prefix="/resume",
     tags=["resume"]
@@ -132,7 +133,6 @@ Input:
 
 Sample Input:
 Provide the resume in the following format:
-
 {{
   "name": "John Doe",
   "email": "johndoe@example.com",
@@ -176,6 +176,30 @@ Generate a detailed report including:
 	•	Relevance of Skills:
 	•	Experience:
 	•	Suggestions:
+  
+    Please return the result as a valid JSON object without any additional explanation. Example output:
+    {{
+    "overall_score": 85,
+    "key_strengths": [
+        "Strong skills in Python, SQL, and Machine Learning.",
+        "Relevant work experience as a Data Scientist and Data Analyst.",
+        "Completed a project on Customer Churn Prediction with high accuracy.",
+        "Holds a B.Sc. in Computer Science from a reputable institution."
+    ],
+    "areas_of_improvement": [
+        "Clarity and Presentation: The resume could benefit from a more structured format and improved readability."
+    ],
+    "detailed_analysis": {{
+        "relevance_of_skills": "The listed skills align well with the job role in data science. Consider adding more specialized skills related to the specific job requirements.",
+        "experience": "The candidate's work experience as a Data Scientist and Data Analyst demonstrates relevant skills and achievements. It would be beneficial to quantify more achievements and provide more details on responsibilities.",
+        "education": "The B.Sc. in Computer Science from a top university is a strong qualification. Consider adding any relevant certifications or courses to enhance the educational background."
+    }},
+    "suggestions": [
+        "Acquire certifications in advanced machine learning techniques or data visualization tools to enhance skill depth.",
+        "Improve resume formatting for better readability and structure.",
+        "Quantify achievements and contributions in work experience and projects to showcase impact."
+    ]
+}}
 
 Make the analysis concise, insightful, and actionable.
 
@@ -191,11 +215,17 @@ Make the analysis concise, insightful, and actionable.
     return result
 
 
+class ResumeAnalysis(BaseModel):
+    resume_id:int
+
+
 
 @router.post("/resume_analysis")
-def resume_analysis_route(resume_id:int,db:Session = Depends(get_db)):
-    resume_data =  resume.get_resume_by_id(db=db,resume_id=resume_id)
-    return resume_analysis(resume_data)
+def resume_analysis_route(resume_id:ResumeAnalysis,db:Session = Depends(get_db)):
+    resume_data =  resume.get_resume_by_id(db=db,resume_id=resume_id.resume_id)
+    data = resume_analysis(resume_data)
+
+    return {"analysis":data,"resume":resume_data}
 
 
 
