@@ -12,6 +12,8 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 import tiktoken
+from pydantic import BaseModel
+
 
 
 
@@ -27,8 +29,6 @@ app = FastAPI(title="My FastAPI App", version="1.0.0")
 
 app.include_router(resume_router)
 app.include_router(jobs_router)
-
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -148,7 +148,7 @@ def check_query(query):
 
 
    
-from pydantic import BaseModel
+
 class QueryRequest(BaseModel):
     question: str
     
