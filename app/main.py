@@ -156,39 +156,12 @@ class QueryRequest(BaseModel):
 def query(query_request:QueryRequest):
     query = generate_query_from_question(query_request.question)
     print(query)
-    # query_mine = """
-    #     SELECT 
-    #         r.id AS resume_id,
-    #         r.name AS resume_name,
-    #         r.skills AS resume_skills,
-    #         jd.skills AS job_skills,
-    #         (
-    #             SELECT COUNT(*) 
-    #             FROM (
-    #                 SELECT TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(jd.skills, ',', numbers.n), ',', -1)) AS skill
-    #                 FROM (
-    #                     SELECT 1 n UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5
-    #                 ) numbers
-    #                 WHERE n <= 1 + LENGTH(jd.skills) - LENGTH(REPLACE(jd.skills, ',', ''))
-    #             ) job_skills_table
-    #             WHERE FIND_IN_SET(skill, REPLACE(r.skills, ' ', ''))
-    #         ) AS matched_skills_count
-    #     FROM 
-    #         resume r
-    #     CROSS JOIN 
-    #         job_details jd
-    #     WHERE 
-    #         jd.id = 1
-    #     HAVING 
-    #         matched_skills_count > 0
-    #     ORDER BY 
-    #         matched_skills_count DESC 
-    #     LIMIT 10;
-    # """
-    print(query)
     result = check_query(text(query))
     print(result)
     return result
+
+
+
 
 
 

@@ -12,6 +12,7 @@ from langchain_core.prompts import PromptTemplate
 from fastapi import File, UploadFile
 from langchain_core.output_parsers import StrOutputParser
 
+
 router = APIRouter(
     prefix="/resume",
     tags=["resume"]
@@ -34,7 +35,6 @@ def load_pdf(file):
     reader = PdfReader(file)
     text = ''.join([page.extract_text() for page in reader.pages if page.extract_text()])
     return text
-
 
 def from_text_to_dict(text):
     """Convert the Text to a dictionary using Google Generative AI"""
@@ -188,11 +188,7 @@ Ensure the analysis is concise, insightful, and actionable.
 Resume:
 {resume}
 """
-
-    
-
-
-    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+    llm = ChatOpenAI(temperature=0.5, model="gpt-3.5-turbo")
     prompt = PromptTemplate(template=prompt_template, input_variables=["resume"])
     chain = prompt | llm | StrOutputParser()
     result = chain.invoke({"resume": resume})

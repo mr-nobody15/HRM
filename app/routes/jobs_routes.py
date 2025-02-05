@@ -43,14 +43,17 @@ Application_Tracking_Prompt = f"""
  Deliverables:
 1. Match Percentage: Calculate a precise match score (%) between the resume and job description based on skills, experience, and role-specific keywords.
 2. Missing Keywords: Identify crucial technical and domain-specific keywords missing from the resume that are essential for the job.
-3. Candidate Profile Summary: Provide a concise summary highlighting relevant strengths and key gaps in alignment with the job.
-4. Improvement Suggestions: Offer specific recommendations to enhance the candidates competitiveness in the job market, focusing on:
+3. Key Strengths: Identify the key strengths of the candidate based on the resume and job description in skills .
+4. Candidate Profile Summary: Provide a concise summary highlighting relevant strengths and key gaps in alignment with the job.
+5. Experience:  Years of experience in the field.
+6. projects: list of projects from the resume.
+7. Improvement Suggestions: Offer specific recommendations to enhance the candidates competitiveness in the job market, focusing on:
    - Technical Expertise: Proficiency in Python, R, SQL, machine learning frameworks, and statistical methods.
    - Domain Knowledge: Understanding of industry-specific applications, such as finance, healthcare, or e-commerce.
    - Certifications & Courses: Suggested certifications (e.g., AWS, TensorFlow, Google Data Analytics) to boost credibility.
    - Projects & Achievements: Enhancing project descriptions with quantifiable outcomes.
    - Resume Optimization: Structural or content improvements to increase ATS-friendliness.
-
+   - Education: Highest degree and field of study.
  Input:
 - Resume:{{text}}
 - Job Description: {{jd}}
@@ -59,7 +62,6 @@ Application_Tracking_Prompt = f"""
 {{format_instructions}}
 
 Ensure that the analysis is data-driven, actionable, and concise, focusing on improving job match accuracy and candidate positioning in a competitive hiring landscape.
-  
     """
 
 def match_job_resume(data):
@@ -89,7 +91,11 @@ def match_job_resume(data):
 class format_instructions_for_output(BaseModel):
     percentage_match:int
     missing_keywords:list
+    key_strengths:list
     Profile_Summary:str
+    experience:int
+    education:str
+    projects: list
     Suggestions_for_improvement:str
 
 @router.post("/analyze-resumes")
