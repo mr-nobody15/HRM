@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_openai import ChatOpenAI
 import time
+from typing import List
+
 
 
 import os
@@ -22,9 +24,19 @@ router = APIRouter(
 def read_root():
     return {"message": "Welcome to My FastAPI App jobs!"}
 
+
+class Job(BaseModel):
+    """
+    Job model for adding job
+    """
+    id: str  # Change int to str since jobId is a string
+    job_title: str
+    job_description: str
+    skills: str
+
 @router.post("/add_job")
-def add_job(db:Session = Depends(get_db)):
-    return jobs.add_job(db=db)
+def add_job(data:List[Job], db: Session = Depends(get_db)):  # Accepts list of jobs
+    return jobs.add_job(db=db, data=data)
 
 @router.get("/get_job")
 def get_job(db:Session = Depends(get_db)):
@@ -33,7 +45,6 @@ def get_job(db:Session = Depends(get_db)):
 @router.get("/get_job_by_id")
 def get_job_by_id(db:Session = Depends(get_db),job_id:int = Query(...)):
     return jobs.get_job_by_id(db=db,job_id=job_id)
-
 
 
 

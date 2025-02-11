@@ -20,6 +20,9 @@ class Job_details(Base):
     job_description = Column(Text)
     skills = Column(Text)
 
+
+
+
 # class resume_analysis(Base):
 #     __tablename__ = "resume_analysis"
 #     id = Column(Integer,primary_key=True,index=True)

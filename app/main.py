@@ -16,8 +16,6 @@ from pydantic import BaseModel
 
 
 
-
-
 load_dotenv()
 
 # Initialize model from LangChain

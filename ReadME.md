@@ -22,7 +22,6 @@ now the db ready to use.
 
 
 to run the project :
-
 poetry run uvicorn app.main:app --reload
 
 
