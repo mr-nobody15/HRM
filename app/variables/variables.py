@@ -12,6 +12,10 @@ class Education(BaseModel):
     degree: str
     year: int
 
+class Project(BaseModel):
+    name: str
+    description: str
+
 class Resume(BaseModel):
     id: int
     name: str
@@ -19,4 +23,4 @@ class Resume(BaseModel):
     skills: str  # List of skills as strings
     experiences: List[Experience]  # json object
     education: List[Education]  # json object
-    projects: str # list of projects
+    projects:  List[Project]  # list of projects

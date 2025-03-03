@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.service import jobs
+from app.service import jobs , resume
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from app.utils.database import get_db
@@ -9,9 +9,6 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_openai import ChatOpenAI
 import time
 from typing import List
-
-
-
 import os
 import json
 
@@ -28,8 +25,8 @@ def read_root():
 class Job(BaseModel):
     """
     Job model for adding job
-    """
-    id: str  # Change int to str since jobId is a string
+    """ 
+    jobId: str 
     job_title: str
     job_description: str
     skills: str
@@ -83,7 +80,7 @@ def match_job_resume(data):
         for resume in resumes:
             job_resume_match.append({
                 "job":{
-                    "id":job["id"],
+                    "id":job["jobId"],
                     "title":job["job_title"],
                     "plainText":job["job_description"],
                     "skills":job["skills"]
@@ -127,3 +124,33 @@ async def analyze_resumes(data:dict,db:Session = Depends(get_db)):
     end_time = time.time()
     print(f"Time taken: {end_time - start_time} seconds")
     return  {"analysis":job_resume_match_result,"job_resume_match":job_resume_match}
+
+
+class format_instructions_for_output_by_id(BaseModel):
+    percentage_match:int
+    missing_keywords:list
+    Profile_Summary:str
+
+
+@router.post("/analyze-by-id")
+async def analyze_by_id(data:dict,db:Session = Depends(get_db)):
+    start_time = time.time()
+    resume_data = resume.get_resume_by_user_id(db=db,user_id=data["userId"])
+    job_data = jobs.get_job_by_id(db=db,job_id=data["jobId"])
+    data = {
+        "resumes":[resume_data],
+        "jobs":[job_data]
+    }
+    parser = PydanticOutputParser(pydantic_object=format_instructions_for_output_by_id)
+    format_instructions = parser.get_format_instructions()
+    print(format_instructions , "format instructions")
+    llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"))
+    formatted_prompt = Application_Tracking_Prompt.format(text=data["resumes"][0],jd=data["jobs"][0],format_instructions=format_instructions)
+    response = llm.invoke(formatted_prompt)
+    print(response.content,"-----------response----------")
+    response_json = json.loads(response.content)
+    end_time = time.time()
+    print(f"Time taken: {end_time - start_time} seconds")
+    return  {"analysis":response_json}
+
+    

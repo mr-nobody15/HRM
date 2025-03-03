@@ -11,6 +11,8 @@ from app.variables.variables import Resume
 from langchain_core.prompts import PromptTemplate
 from fastapi import File, UploadFile
 from langchain_core.output_parsers import StrOutputParser
+from io import BytesIO
+from docx import Document
 
 
 router = APIRouter(
@@ -31,9 +33,27 @@ def add_resume(db:Session = Depends(get_db)):
 def get_resume(db:Session = Depends(get_db)):
     return resume.get_resume(db=db)
 
-def load_pdf(file):
-    reader = PdfReader(file)
-    text = ''.join([page.extract_text() for page in reader.pages if page.extract_text()])
+def load_pdf(file,filename):
+    text = ""
+    print(filename , "filename")
+    print(file , "file")
+    if filename.endswith(".pdf"):
+        if isinstance(file, bytes):  # Convert bytes to file-like object if needed
+            file = BytesIO(file)
+        reader = PdfReader(file)
+        for page in reader.pages:
+            text += page.extract_text() or ""  # Extract text from each page
+
+    elif filename.endswith(".docx"):
+        if isinstance(file, bytes):  # Convert bytes to file-like object
+            file = BytesIO(file)
+        doc = Document(file)
+        for para in doc.paragraphs:
+            text += para.text + "\n"  # Extract text from paragraphs
+
+    else:
+        raise ValueError("Unsupported file type. Only PDF and DOCX are supported.")
+
     return text
 
 def from_text_to_dict(text):
@@ -62,7 +82,11 @@ sample_Output = {{
         "education": [
             {{"institution": "XYZ University", "degree": "Bachelors in Computer Science", "year": 2018}}
         ],
-        "projects": "Personal Blog, AI-driven Recommendation System , AI-driven Chatbot"
+        "projects": [
+            {{"name": "Personal Blog", "description": "A blog about my experiences and thoughts."}},
+            {{"name": "AI-driven Recommendation System", "description": "A recommendation system that uses AI to recommend products to users."}},
+            {{"name": "AI-driven Chatbot", "description": "A chatbot that uses AI to answer questions."}}
+        ]
         }}
     
 
@@ -85,16 +109,22 @@ if there is no experience then  include it in the json object as an empty list
 
 @router.post("/resume_parser")
 async def resume_parser(file:UploadFile = File(...),db:Session = Depends(get_db)):
-    await file.seek(0)
-    text = load_pdf(file.file)
+    # file.seek(0)
+    content = file.read()
+    print(content , "content")
+    text = load_pdf(content,file.name)
+    print(file.name , "file.filename")
+    print(text,"text")
+    user_id = file.name.split("/")[1].split("-")[0]
+    print(user_id , "user_id")
     resume_data = from_text_to_dict(text)
-    print(resume_data , "resume_data")
-    resume.add_resume(resume_data,db=db)
+    print(resume_data,"resume_data")
+    resume.add_resume(resume_data,user_id,db=db)
+
     return {"message":"Resume added successfully","resume":resume_data}
 
 
 def resume_analysis(resume):
-    
     prompt_template = """
 You are an AI Assistant designed to evaluate resumes and provide actionable insights. Your task is to analyze the given resume and generate a structured assessment with the following outputs:
 
@@ -207,6 +237,11 @@ def resume_analysis_route(resume_id:ResumeAnalysis,db:Session = Depends(get_db))
     data = resume_analysis(resume_data)
 
     return {"analysis":data,"resume":resume_data}
+
+
+
+
+
 
 
 

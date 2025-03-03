@@ -13,13 +13,14 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 import tiktoken
 from pydantic import BaseModel
-
+from app.service.syncService import router as sync_router
 
 
 load_dotenv()
 
 # Initialize model from LangChain
 encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
 model = ChatOpenAI(model="gpt-3.5-turbo",api_key=os.getenv("OPENAI_API_KEY"))
 parser = StrOutputParser()
 
@@ -27,6 +28,7 @@ app = FastAPI(title="My FastAPI App", version="1.0.0")
 
 app.include_router(resume_router)
 app.include_router(jobs_router)
+app.include_router(sync_router)
 
 app.add_middleware(
     CORSMiddleware,
