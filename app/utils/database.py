@@ -7,7 +7,7 @@ import os
 load_dotenv()
 
 
-DATABASE_URL = "mysql+pymysql://admin:BiTs3678@airecruitpro.cfaq06062gu5.us-east-1.rds.amazonaws.com:3306/dev"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
