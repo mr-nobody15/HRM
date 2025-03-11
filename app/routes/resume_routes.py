@@ -108,19 +108,19 @@ if there is no experience then  include it in the json object as an empty list
 
 
 @router.post("/resume_parser")
-async def resume_parser(file:UploadFile = File(...),db:Session = Depends(get_db)):
+async def resume_parser(filename:str,file:UploadFile = File(...),db:Session = Depends(get_db)):
     # file.seek(0)
-    content = file.read()
+    print(file ,"file")
+    content = file.file.read()
     print(content , "content")
-    text = load_pdf(content,file.name)
-    print(file.name , "file.filename")
+    text = load_pdf(content,file.filename)
+    print(file.filename , "file.filename")
     print(text,"text")
-    user_id = file.name.split("/")[1].split("-")[0]
+    user_id = filename
     print(user_id , "user_id")
     resume_data = from_text_to_dict(text)
     print(resume_data,"resume_data")
     resume.add_resume(resume_data,user_id,db=db)
-
     return {"message":"Resume added successfully","resume":resume_data}
 
 
@@ -237,6 +237,11 @@ def resume_analysis_route(resume_id:ResumeAnalysis,db:Session = Depends(get_db))
     data = resume_analysis(resume_data)
 
     return {"analysis":data,"resume":resume_data}
+
+
+
+
+
 
 
 

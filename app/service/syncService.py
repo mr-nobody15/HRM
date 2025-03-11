@@ -57,7 +57,8 @@ async def parse_and_store_resumes(db: Session):
 @router.get("/sync-resumes")
 def sync_resumes(db: Session = Depends(get_db)):
     """Fetch resumes from RecruitPro, extract, parse, and store."""
-    # zip_path = download_zip()
-    # extract_zip(zip_path)
+    zip_path = download_zip()
+    result = extract_zip(zip_path)
+    print(result,"result")
     asyncio.run(parse_and_store_resumes(db))
     return {"message": "Resumes synced and parsed successfully"}

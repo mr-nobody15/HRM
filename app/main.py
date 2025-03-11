@@ -14,6 +14,12 @@ from langchain_openai import ChatOpenAI
 import tiktoken
 from pydantic import BaseModel
 from app.service.syncService import router as sync_router
+import schedule
+import time
+import requests
+import threading
+
+
 
 
 load_dotenv()
@@ -51,7 +57,6 @@ def generate_query_from_question(question):
     Generate SQL query dynamically based on a general question.
     This function will return a single SQL query for a general question based on the provided schema.
     """
-    # Updated prompt with specific instructions to handle complete word matches and skills column
     prompt = ChatPromptTemplate.from_template("""
     Generate a SQL query to retrieve specific information from the database.
 
@@ -164,18 +169,26 @@ def query(query_request:QueryRequest):
 
 
 
+API_URL = os.environ.get("API_URL") + "/jobs/sync_job_data"
 
+def sync_job_data():
+    try:
+        response = requests.post(API_URL, verify=False)
+        print(f"Sync Response: {response}, {response.json()}")
+    except Exception as e:
+        print(f"Error: {e}")
 
+# Schedule job to run every 3 hours
+schedule.every(3).hours.do(sync_job_data)
 
+def run_scheduler():
+    while True:
+        schedule.run_pending()
+        time.sleep(60)  # Check every minute
 
-
-
-
-
-
-
-
-
+# Start scheduler in a separate thread
+scheduler_thread = threading.Thread(target=run_scheduler, daemon=True)
+scheduler_thread.start()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

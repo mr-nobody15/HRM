@@ -38,6 +38,9 @@ def add_resume(resume:models.Resume,user_id:str,db:Session):
             education = [edu.dict() for edu in resume.education],
             projects= [project.dict() for project in resume.projects]
         )
+    query = db.query(models.Resume).filter(models.Resume.user_id == user_id).first()
+    if query:
+        db.delete(query)
     db.add(new_resume)
     db.commit()
 
@@ -46,4 +49,6 @@ def get_resume_by_user_id(db:Session,user_id:str):
     resume_data = db.query(models.Resume).filter(models.Resume.user_id == user_id).first()
     print(resume_data , "resume_data")
     return resume_data
+
+
 

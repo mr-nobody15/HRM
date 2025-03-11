@@ -11,6 +11,8 @@ import time
 from typing import List
 import os
 import json
+import requests
+from app.service.jobs import sync_job_data
 
 router = APIRouter(
     prefix="/jobs",
@@ -141,6 +143,7 @@ async def analyze_by_id(data:dict,db:Session = Depends(get_db)):
         "resumes":[resume_data],
         "jobs":[job_data]
     }
+    print(data , "data")
     parser = PydanticOutputParser(pydantic_object=format_instructions_for_output_by_id)
     format_instructions = parser.get_format_instructions()
     print(format_instructions , "format instructions")
@@ -153,4 +156,20 @@ async def analyze_by_id(data:dict,db:Session = Depends(get_db)):
     print(f"Time taken: {end_time - start_time} seconds")
     return  {"analysis":response_json}
 
-    
+
+## Cron Job for sync the data from recruitpro  Job data to the database
+
+@router.post("/sync_job_data")
+def sync_job_data_from_recruitpro(db:Session = Depends(get_db)):
+    url = f"{os.getenv('RECRUITPRO_API_KEY')}/jobs/all"
+    response = requests.get(url ,verify=False)
+    print(response.json())
+    result = response.json()
+    result_add = sync_job_data(result , db=db)
+    return result_add
+
+
+
+
+# @router.post("/add_resume_Analysis")
+# async def add_resume_Analysis(data:dict,db:Session = Depends(get_db)):
