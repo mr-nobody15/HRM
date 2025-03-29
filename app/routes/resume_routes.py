@@ -9,7 +9,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import PydanticOutputParser
 from app.variables.variables import Resume
 from langchain_core.prompts import PromptTemplate
-from fastapi import File, UploadFile
+from fastapi import File, UploadFile, Query
 from langchain_core.output_parsers import StrOutputParser
 from io import BytesIO
 from docx import Document
@@ -108,7 +108,7 @@ if there is no experience then  include it in the json object as an empty list
 
 
 @router.post("/resume_parser")
-async def resume_parser(filename:str,file:UploadFile = File(...),db:Session = Depends(get_db)):
+async def resume_parser(filename: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
     # file.seek(0)
     print(file ,"file")
     content = file.file.read()
@@ -228,9 +228,7 @@ Resume:
 
 class ResumeAnalysis(BaseModel):
     resume_id:int
-
-
-
+    
 @router.post("/resume_analysis")
 def resume_analysis_route(resume_id:ResumeAnalysis,db:Session = Depends(get_db)):
     resume_data =  resume.get_resume_by_id(db=db,resume_id=resume_id.resume_id)

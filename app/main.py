@@ -127,6 +127,7 @@ def generate_query_from_question(question):
 
 import json
 def check_query(query):
+    print(query,"query")
     try:
 # Execute the query directly with engine.connect()
         with engine.connect() as connection:

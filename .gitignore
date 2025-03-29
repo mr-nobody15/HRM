@@ -8,3 +8,4 @@ __pycache__/
 # Ignore the database file
 sql_app.db
 
+.qodo

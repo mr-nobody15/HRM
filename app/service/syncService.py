@@ -60,5 +60,5 @@ def sync_resumes(db: Session = Depends(get_db)):
     zip_path = download_zip()
     result = extract_zip(zip_path)
     print(result,"result")
-    asyncio.run(parse_and_store_resumes(db))
+    asyncio.run(parse_and_store_resumes(db=db))
     return {"message": "Resumes synced and parsed successfully"}
