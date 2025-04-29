@@ -4,8 +4,6 @@ __pycache__/
 
 # Ignore all files in the .env directory
 .env
-
 # Ignore the database file
 sql_app.db
-
 .qodo

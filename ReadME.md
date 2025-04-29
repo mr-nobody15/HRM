@@ -24,7 +24,6 @@ now the db ready to use.
 to run the project :
 poetry run uvicorn app.main:app --reload
 
-
 Docker Commands:
 docker build --platform linux/amd64 -t nandakish0106/recruitproai .
 
@@ -32,7 +31,7 @@ docker push nandakish0106/recruitproai:latest
 
 
 
-
+  
 
 
 

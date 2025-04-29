@@ -88,22 +88,17 @@ sample_Output = {{
             {{"name": "AI-driven Chatbot", "description": "A chatbot that uses AI to answer questions."}}
         ]
         }}
-    
-
 Resume Text:
 {text}
-
 Please return the result as a valid JSON object without any additional explanation. Example output:
 Only use details from the document. Do not generate any additional information.
 {format_instructions}
 if there is no experience then  include it in the json object as an empty list
 """
-
     llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
     prompt = PromptTemplate(template=prompt_template, input_variables=["text"], partial_variables={"format_instructions": format_instructions})
     chain = prompt | llm | parser
     result = chain.invoke({"text": text})
-
     return result
 
 
@@ -152,7 +147,6 @@ You are an AI Assistant designed to evaluate resumes and provide actionable insi
    - Skill & Certification Recommendations: Suggest relevant skills or certifications to acquire.
    - Resume Improvements: Recommend formatting or content refinements for clarity and professionalism.
    - Quantification of Achievements: Suggest ways to enhance impact through measurable contributions.
-
 Input Format:
 Provide the resume as a structured JSON object in the following format:
 {{
@@ -188,7 +182,6 @@ Provide the resume as a structured JSON object in the following format:
     }}
   ]
 }}
-
 Output Format:
 Return the result as a structured JSON object with no additional explanation:
 {{
@@ -214,9 +207,9 @@ Return the result as a structured JSON object with no additional explanation:
   ]
 }}
 Ensure the analysis is concise, insightful, and actionable.
-
 Resume:
 {resume}
+
 """
     llm = ChatOpenAI(temperature=0.5, model="gpt-3.5-turbo")
     prompt = PromptTemplate(template=prompt_template, input_variables=["resume"])

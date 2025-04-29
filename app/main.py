@@ -51,7 +51,6 @@ def read_root():
     return {"message": "Welcome to My FastAPI App!"}
 
 
-
 def generate_query_from_question(question):
     """
     Generate SQL query dynamically based on a general question.
@@ -77,7 +76,7 @@ def generate_query_from_question(question):
                         "give me the candidates suitable for job id 1",
                         "candidates for job id 1 ",
                         "suitable candidates for job id 1",
-    query: " SELECT 
+    query: "SELECT 
             r.id AS resume_id,
             r.name AS resume_name,
             r.skills AS resume_skills,
@@ -104,24 +103,17 @@ def generate_query_from_question(question):
         ORDER BY 
             matched_skills_count DESC 
         LIMIT 10;
-    "
-                                              
-
+    "                                     
     The question is:
     "{question}"
-
     Please write an SQL query that retrieves the required information based on the provided schema, using **exact matching** in the `skills` column and handling commas and spaces properly.
     The SQL query should be in plain text with no markdown formatting.Check for substrings and not to consider unless entire word is present.
     """)
-
-
-
     chain = prompt | model | parser
     # Invoke the chain with the provided question and enhanced prompt
     query = chain.invoke({"question": question, "prompt": prompt})
     token = encoding.encode(str(prompt))
     print("token length *************",len(token))
-
     return query
 
 
@@ -152,8 +144,6 @@ def check_query(query):
         return "Error"
     
 
-
-   
 
 class QueryRequest(BaseModel):
     question: str
