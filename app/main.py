@@ -8,12 +8,12 @@ import os
 from sqlalchemy import text
 from app.routes.resume_routes import router as resume_router
 from app.routes.jobs_routes import router as jobs_router
+from app.routes.sync_routes import router as sync_router
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 import tiktoken
 from pydantic import BaseModel
-from app.service.syncService import router as sync_router
 import schedule
 import time
 import requests

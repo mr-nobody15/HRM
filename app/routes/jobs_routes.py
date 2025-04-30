@@ -13,6 +13,7 @@ import os
 import json
 import requests
 from app.service.jobs import sync_job_data
+from fastapi import HTTPException
 
 router = APIRouter(
     prefix="/jobs",
@@ -108,24 +109,65 @@ class format_instructions_for_output(BaseModel):
     projects: list
     Suggestions_for_improvement:str
 
+class AnalyzeRequest(BaseModel):
+    user_id: str
+    job_id: str
+
 @router.post("/analyze-resumes")
-async def analyze_resumes(data:dict,db:Session = Depends(get_db)):
-    start_time = time.time()
-    job_resume_match = match_job_resume(data)
-    parser = PydanticOutputParser(pydantic_object=format_instructions_for_output)
-    format_instructions = parser.get_format_instructions()
-    print(format_instructions , "format instructions")
-    llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"))
-    job_resume_match_result = []
-    for job_resume in job_resume_match:
-        formatted_prompt = Application_Tracking_Prompt.format(text=job_resume["resume"],jd=job_resume["job"],format_instructions=format_instructions)
+async def analyze_resumes(data: AnalyzeRequest, db: Session = Depends(get_db)):
+    try:
+        start_time = time.time()
+        # Fetch resume data for the user
+        resume_data = resume.get_resume_by_user_id(db=db, user_id=data.user_id)
+        if not resume_data:
+            raise HTTPException(status_code=404, detail=f"Resume not found for user {data.user_id}")
+        # Fetch job data
+        job_data = jobs.get_job_by_id(db=db, job_id=data.job_id)
+        if not job_data:
+            raise HTTPException(status_code=404, detail=f"Job not found with ID {data.job_id}")
+        
+        # Prepare data for analysis
+        analysis_data = {
+            "job": {
+                "id": job_data.jobId,
+                "title": job_data.job_title,
+                "plainText": job_data.job_description,
+                "skills": job_data.skills
+            },
+            "resume": {
+                "id": resume_data.id,
+                "name": resume_data.name,
+                "skills": resume_data.skills,
+                "experiences": resume_data.experiences or [],
+                "education": resume_data.education or [],
+                "projects": resume_data.projects or []
+            }
+        }
+        
+        # Perform analysis
+        parser = PydanticOutputParser(pydantic_object=format_instructions_for_output)
+        format_instructions = parser.get_format_instructions()
+        llm = ChatOpenAI(model="gpt-3.5-turbo", api_key=os.getenv("OPENAI_API_KEY"))
+        
+        formatted_prompt = Application_Tracking_Prompt.format(
+            text=analysis_data["resume"],
+            jd=analysis_data["job"],
+            format_instructions=format_instructions
+        )
+        
         response = llm.invoke(formatted_prompt)
-        print(response.content,"-----------response----------")
         response_json = json.loads(response.content)
-        job_resume_match_result.append(response_json)
-    end_time = time.time()
-    print(f"Time taken: {end_time - start_time} seconds")
-    return  {"analysis":job_resume_match_result,"job_resume_match":job_resume_match}
+        
+        end_time = time.time()
+        print(f"Time taken: {end_time - start_time} seconds")
+        
+        return {
+            "analysis": response_json,
+            "job_resume_match": analysis_data
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing resume: {str(e)}")
 
 
 class format_instructions_for_output_by_id(BaseModel):

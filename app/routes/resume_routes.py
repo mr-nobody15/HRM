@@ -13,7 +13,12 @@ from fastapi import File, UploadFile, Query
 from langchain_core.output_parsers import StrOutputParser
 from io import BytesIO
 from docx import Document
+from fastapi import HTTPException
+import logging
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/resume",
@@ -28,40 +33,42 @@ def read_root():
 def add_resume(db:Session = Depends(get_db)):
     return resume.add_resume(db=db)
 
-
 @router.get("/get_resume")
 def get_resume(db:Session = Depends(get_db)):
     return resume.get_resume(db=db)
 
-def load_pdf(file,filename):
+def load_pdf(file, filename):
     text = ""
-    print(filename , "filename")
-    print(file , "file")
-    if filename.endswith(".pdf"):
-        if isinstance(file, bytes):  # Convert bytes to file-like object if needed
-            file = BytesIO(file)
+    logger.info(f"Processing file: {filename}")
+    
+    # Ensure we have a file-like object
+    if isinstance(file, bytes):
+        file = BytesIO(file)
+    
+    # Get file extension
+    file_ext = filename.lower().split('.')[-1] if '.' in filename else ''
+    logger.info(f"File extension: {file_ext}")
+    
+    if file_ext == 'pdf':
         reader = PdfReader(file)
         for page in reader.pages:
             text += page.extract_text() or ""  # Extract text from each page
-
-    elif filename.endswith(".docx"):
-        if isinstance(file, bytes):  # Convert bytes to file-like object
-            file = BytesIO(file)
+    elif file_ext == 'docx':
         doc = Document(file)
         for para in doc.paragraphs:
             text += para.text + "\n"  # Extract text from paragraphs
-
     else:
-        raise ValueError("Unsupported file type. Only PDF and DOCX are supported.")
+        raise ValueError(f"Unsupported file type: {file_ext}. Only PDF and DOCX are supported.")
 
     return text
 
 def from_text_to_dict(text):
     """Convert the Text to a dictionary using Google Generative AI"""
-    parser = PydanticOutputParser(pydantic_object=Resume)
-    # Create the PromptTemplate
-    format_instructions = parser.get_format_instructions()
-    prompt_template = """
+    try:
+        parser = PydanticOutputParser(pydantic_object=Resume)
+        # Create the PromptTemplate
+        format_instructions = parser.get_format_instructions()
+        prompt_template = """
 Convert the following resume text into a structured JSON object with the following fields:
     - "name": The name of the person.
     - "email": The email address.
@@ -95,29 +102,44 @@ Only use details from the document. Do not generate any additional information.
 {format_instructions}
 if there is no experience then  include it in the json object as an empty list
 """
-    llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
-    prompt = PromptTemplate(template=prompt_template, input_variables=["text"], partial_variables={"format_instructions": format_instructions})
-    chain = prompt | llm | parser
-    result = chain.invoke({"text": text})
-    return result
-
+        llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo")
+        prompt = PromptTemplate(template=prompt_template, input_variables=["text"], partial_variables={"format_instructions": format_instructions})
+        chain = prompt | llm | parser
+        result = chain.invoke({"text": text})
+        return result
+    except Exception as e:
+        logger.error(f"Error converting text to dictionary: {str(e)}")
+        raise
 
 @router.post("/resume_parser")
-async def resume_parser(filename: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
-    # file.seek(0)
-    print(file ,"file")
-    content = file.file.read()
-    print(content , "content")
-    text = load_pdf(content,file.filename)
-    print(file.filename , "file.filename")
-    print(text,"text")
-    user_id = filename
-    print(user_id , "user_id")
-    resume_data = from_text_to_dict(text)
-    print(resume_data,"resume_data")
-    resume.add_resume(resume_data,user_id,db=db)
-    return {"message":"Resume added successfully","resume":resume_data}
-
+async def resume_parser(filename: str, attachment:str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        logger.info(f"Starting resume parsing for user: {filename}")
+        
+        # Read file content
+        content = await file.read()
+        logger.info(f"Read file content, size: {len(content)} bytes")
+        
+        # Create a BytesIO object from the content
+        file_obj = BytesIO(content)
+        
+        # Extract text from file
+        text = load_pdf(file_obj, file.filename)
+        logger.info("Successfully extracted text from file")
+        
+        # Parse text to structured data
+        resume_data = from_text_to_dict(text)
+        logger.info("Successfully parsed text to structured data")
+        print(resume_data , "resume_data")
+        
+        # Store in database with user_id
+        resume.add_resume(resume_data, filename, attachment, db=db)
+        logger.info("Successfully stored resume in database with file name : ",filename)
+        
+        return {"message": "Resume added successfully", "resume": resume_data}
+    except Exception as e:
+        logger.error(f"Error parsing resume: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error parsing resume: {str(e)}")
 
 def resume_analysis(resume):
     prompt_template = """
@@ -217,7 +239,6 @@ Resume:
     result = chain.invoke({"resume": resume})
     print(result)
     return result
-
 
 class ResumeAnalysis(BaseModel):
     resume_id:int

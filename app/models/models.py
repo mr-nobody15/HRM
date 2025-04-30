@@ -1,6 +1,7 @@
-from sqlalchemy import Column,Integer,String,Boolean, ForeignKey,JSON,Text
+from sqlalchemy import Column,Integer,String,Boolean, ForeignKey,JSON,Text,DateTime
 from sqlalchemy.orm import relationship
 from app.utils.database import Base
+from datetime import datetime
 
 
 class Resume(Base):
@@ -14,6 +15,8 @@ class Resume(Base):
     experiences = Column(JSON)
     education = Column(JSON)
     projects = Column(JSON)
+    file_name = Column(String(255),index=True)
+    updated_at = Column(DateTime,default=datetime.now)
 
     def __repr__(self):
         return f"Resume(id={self.id}, user_id={self.user_id}, name={self.name}, email={self.email}, skills={self.skills}, experiences={self.experiences}, education={self.education}, projects={self.projects})"

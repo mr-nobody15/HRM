@@ -37,10 +37,8 @@ def get_connection():
 
 # Create engine
 engine = get_connection()
-
 # Create session factory
 SessionLocal = sessionmaker(bind=engine)
-
 # Create base for models
 Base = declarative_base()
 
