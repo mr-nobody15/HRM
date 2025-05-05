@@ -18,9 +18,6 @@ Check whether you have installed my sql server or not
     change the database url according to your local database.
 
 now the db ready to use.
-
-
-
 to run the project :
 poetry run uvicorn app.main:app --reload
 

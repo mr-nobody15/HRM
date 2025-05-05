@@ -24,9 +24,11 @@ class Resume(Base):
 class Job_details(Base):
     __tablename__ = "job_details"
     jobId = Column(String(255),primary_key=True,index=True)
+    tenant_id = Column(String(255),index=True)
     job_title = Column(String(255))
     job_description = Column(Text)
     skills = Column(Text)
+    created_at = Column(DateTime,default=datetime.now)
 
     def __repr__(self):
         return f"Job_details(jobId={self.jobId}, job_title={self.job_title}, job_description={self.job_description}, skills={self.skills})"

@@ -9,6 +9,7 @@ from sqlalchemy import text
 from app.routes.resume_routes import router as resume_router
 from app.routes.jobs_routes import router as jobs_router
 from app.routes.sync_routes import router as sync_router
+from app.routes.analysis_route import router as analysis_router
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -35,6 +36,7 @@ app = FastAPI(title="My FastAPI App", version="1.0.0")
 app.include_router(resume_router)
 app.include_router(jobs_router)
 app.include_router(sync_router)
+app.include_router(analysis_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,7 +70,7 @@ def generate_query_from_question(question):
     3. Write the query to match **exactly** the skill or other field in the question.
     4. Avoid partial matching.
                                               
-    sample querys:
+    sample query:
     question: "give me the resume of the person who has java in skills"
     query: "SELECT *  FROM resume WHERE CONCAT(',', REPLACE(skills, ' ', ''), ',') LIKE '%,java,%';"
                                               
@@ -143,11 +145,8 @@ def check_query(query):
         print(f"Error executing query: {e}")
         return "Error"
     
-
-
 class QueryRequest(BaseModel):
     question: str
-    
 @app.post("/query")
 def query(query_request:QueryRequest):
     query = generate_query_from_question(query_request.question)
@@ -156,12 +155,7 @@ def query(query_request:QueryRequest):
     print(result)
     return result
 
-
-
-
-
 API_URL = os.environ.get("API_URL") + "/jobs/sync_job_data"
-
 def sync_job_data():
     try:
         response = requests.post(API_URL, verify=False)

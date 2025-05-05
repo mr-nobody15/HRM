@@ -14,6 +14,7 @@ import json
 import requests
 from app.service.jobs import sync_job_data
 from fastapi import HTTPException
+from app.variables.variables import AnalyzeRequest
 
 router = APIRouter(
     prefix="/jobs",
@@ -109,9 +110,7 @@ class format_instructions_for_output(BaseModel):
     projects: list
     Suggestions_for_improvement:str
 
-class AnalyzeRequest(BaseModel):
-    user_id: str
-    job_id: str
+
 
 @router.post("/analyze-resumes")
 async def analyze_resumes(data: AnalyzeRequest, db: Session = Depends(get_db)):
@@ -162,8 +161,7 @@ async def analyze_resumes(data: AnalyzeRequest, db: Session = Depends(get_db)):
         print(f"Time taken: {end_time - start_time} seconds")
         
         return {
-            "analysis": response_json,
-            "job_resume_match": analysis_data
+            "analysis": response_json
         }
         
     except Exception as e:
@@ -203,12 +201,37 @@ async def analyze_by_id(data:dict,db:Session = Depends(get_db)):
 
 @router.post("/sync_job_data")
 def sync_job_data_from_recruitpro(db:Session = Depends(get_db)):
-    url = f"{os.getenv('RECRUITPRO_API_KEY')}/jobs/all"
-    response = requests.get(url ,verify=False)
-    print(response.json())
-    result = response.json()
-    result_add = sync_job_data(result , db=db)
-    return result_add
+    try:
+        url = "https://localhost:3002/publicjobs/all"
+        response = requests.get(url, verify=False)
+        
+        # Check if response is successful
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch jobs from RecruitPro")
+            
+        # Try to parse the response as JSON
+        try:
+            result = response.json()
+        except ValueError as e:
+            print(f"Error parsing JSON: {str(e)}")
+            print(f"Response content: {response.text}")
+            raise HTTPException(status_code=500, detail="Invalid JSON response from RecruitPro")
+            
+        # Ensure we have a list of jobs
+        if not isinstance(result, list):
+            if isinstance(result, dict) and "data" in result:
+                result = result["data"]
+            else:
+                raise HTTPException(status_code=500, detail="Invalid data format from RecruitPro")
+                
+        # Process the jobs
+        result_add = sync_job_data(result, db=db)
+        return result_add
+        
+    except requests.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Error connecting to RecruitPro: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error syncing jobs: {str(e)}")
 
 
 

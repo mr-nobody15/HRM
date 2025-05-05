@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 class Experience(BaseModel):
     company: str
@@ -23,4 +23,16 @@ class Resume(BaseModel):
     skills: str  # List of skills as strings
     experiences: List[Experience]  # json object
     education: List[Education]  # json object
-    projects:  List[Project]  # list of projects
+    projects:  List[Project] 
+    
+    
+class AnalyzeRequest(BaseModel):
+    user_id: str
+    job_id: str
+
+
+class Analysis(BaseModel):
+    user_id:str
+    job_id:str
+    file_name:str
+    isExisting:Optional[bool] = False
