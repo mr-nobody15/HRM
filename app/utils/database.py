@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 import os
 import logging
+from urllib.parse import quote_plus
 
 load_dotenv()
 
@@ -13,13 +14,20 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST")
 DB_PORT = os.getenv("DB_PORT")
 DB_NAME = os.getenv("DB_NAME")
+print(DB_PASSWORD , "DB_PASSWORD")
+
+
+
+def format_db_url(user, password, host, port, dbname, dialect="mysql", driver="pymysql"):
+    encoded_user = quote_plus(user)
+    encoded_password = quote_plus(password)
+    return f"{dialect}+{driver}://{encoded_user}:{encoded_password}@{host}:{port}/{dbname}"
 
 def get_connection():
     try:
         # Create database URL with proper formatting
-        DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        
-        # Create engine with connection pool settings
+        DATABASE_URL = format_db_url(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
+        print(DATABASE_URL)
         engine = create_engine(
             DATABASE_URL,
             pool_size=10,
@@ -28,7 +36,6 @@ def get_connection():
             pool_pre_ping=True,
             pool_recycle=3600
         )
-        
         print(f"Connection to {DB_HOST} for user {DB_USER} created successfully.")
         return engine
     except Exception as ex:
